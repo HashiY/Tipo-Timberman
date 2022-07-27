@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic; // para usar lista de gameobj
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class Principal : MonoBehaviour {
 	 
@@ -14,12 +15,18 @@ public class Principal : MonoBehaviour {
 	public GameObject blocoCentro; //barril
 	public GameObject barra;
 
-	public Text textoScore;
-    int scoreJogo;
+	public Text scoreText;
+	public Text startText;
+	public Text highScoreText;
 
-    public AudioClip somBate;
+	public GameObject objectCanvasScore;
+	public GameObject objectCanvasHighscore;
+
+	private int score, highscore;
+	private string sceneName;
+
+	public AudioClip somBate;
 	public AudioClip somPerde;
-
 
 	bool acabou;
     bool comecou; 
@@ -35,16 +42,31 @@ public class Principal : MonoBehaviour {
 		listaBlocos = new List<GameObject>();  //inicializar a lista
 		CriaBlocosNaCena();
 
-		textoScore.transform.position = new Vector2(Screen.width/2,Screen.height/2+200);  
-		textoScore.text = "Toque para iniciar!";
-		textoScore.fontSize = 45;  
+		scoreText.text = "0";
+		objectCanvasScore.transform.position = new Vector2(Screen.width / 6 - 46, Screen.height - 50);
+		objectCanvasHighscore.transform.position = new Vector2(Screen.width / 6 - 46, Screen.height - 100);
+
+		//Colocando o highscore para ser salvo
+		sceneName = SceneManager.GetActiveScene().name;
+		if (PlayerPrefs.HasKey(sceneName + "score"))
+		{
+			highscore = PlayerPrefs.GetInt(sceneName + "score");
+			highScoreText.text = highscore.ToString();
+		}
+
+		startText.enabled = true;
+		startText.transform.position = new Vector2(Screen.width/2,Screen.height/2+200);
+		startText.text = "Toque para iniciar!";
+		startText.fontSize = 45;
 	}
 
 	void Update () {
 		if(!acabou){
 			if(Input.GetButtonDown("Fire1")){  //mause 
 
-				if(!comecou){
+				startText.enabled = false;
+
+				if (!comecou){
 					comecou=true;
 					barra.SendMessage("ComecouJogo"); // para usar a barra
 				}
@@ -142,11 +164,15 @@ public class Principal : MonoBehaviour {
 
 
 	void MarcaPonto(){ // nada de novo
-		scoreJogo++;
-        textoScore.text = scoreJogo.ToString();
-        textoScore.transform.position = new Vector2(Screen.width / 2 - 200, Screen.height / 2 + 200);
-        textoScore.fontSize = 100;
-		textoScore.color = new Color(0.95f,1.0f,0.35f);
+		score++;
+		scoreText.text = score.ToString();
+
+		if (score > highscore)
+		{
+			highscore = score;
+			highScoreText.text = highscore.ToString();
+			PlayerPrefs.SetInt(sceneName + "score", highscore);
+		}
 
 		GetComponent<AudioSource>().PlayOneShot(somBate); //som
 	}
