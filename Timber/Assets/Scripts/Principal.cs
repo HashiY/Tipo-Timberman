@@ -43,8 +43,8 @@ public class Principal : MonoBehaviour {
 		CriaBlocosNaCena();
 
 		scoreText.text = "0";
-		objectCanvasScore.transform.position = new Vector2(Screen.width / 6 - 46, Screen.height - 50);
-		objectCanvasHighscore.transform.position = new Vector2(Screen.width / 6 - 46, Screen.height - 100);
+		objectCanvasScore.transform.position = new Vector2(Screen.width / 6 - 46, Screen.height - 100);
+		objectCanvasHighscore.transform.position = new Vector2(Screen.width / 6 - 46, Screen.height - 50);
 
 		//Colocando o highscore para ser salvo
 		sceneName = SceneManager.GetActiveScene().name;
