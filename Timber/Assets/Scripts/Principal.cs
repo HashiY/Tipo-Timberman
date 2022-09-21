@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic; // para usar lista de gameobj
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 
 public class Principal : MonoBehaviour {
 	 
@@ -17,24 +18,61 @@ public class Principal : MonoBehaviour {
 
 	public Text scoreText;
 	public Text startText;
+	public Text startTextJP;
 	public Text highScoreText;
 
 	public GameObject objectCanvasScore;
 	public GameObject objectCanvasHighscore;
 
-	private int score, highscore;
+	[HideInInspector]
+	public int score, highscore;
+
 	private string sceneName;
 
 	public AudioClip somBate;
 	public AudioClip somPerde;
 
-	bool acabou;
+	[HideInInspector]
+	public bool acabou;
     bool comecou; 
 	bool ladoJogador; //lado
+	bool pause;
 	
 	private float escalaHorizontalJogador;
 
 	private List<GameObject> listaBlocos;
+
+	public DeadTimeStop deadTimeStop;
+	public Button buttonMenuStting;
+
+	public web webscore;
+	public PauseController pauseController;
+
+    void Awake()
+    {
+		GameStateManager.Instance.OnGameStateChanged += OnGameStateChanged;
+    }
+
+    void OnDestroy()
+    {
+		GameStateManager.Instance.OnGameStateChanged -= OnGameStateChanged;
+    }
+
+	private void OnGameStateChanged(GameState newGameState)
+	{
+		enabled = newGameState == GameState.Gameplay;
+
+		if(newGameState == GameState.Gameplay)
+        {
+			pause = false;
+			barra.SendMessage("ComecouJogo");
+		}
+        else
+        {
+			pause = true;
+			barra.SendMessage("PauseGame");
+		}
+	}
 
 	void Start () {
 		felpudoBate.SetActive(false); // desaparece
@@ -56,35 +94,51 @@ public class Principal : MonoBehaviour {
 
 		startText.enabled = true;
 		startText.transform.position = new Vector2(Screen.width/2,Screen.height/2+200);
-		startText.text = "Toque para iniciar!";
+		//startText.text = "Toque para iniciar!Tap to start!!!タップしてスタート!!!";
 		startText.fontSize = 45;
+
+		startTextJP.enabled = true;
+		startTextJP.transform.position = new Vector2(Screen.width / 2, Screen.height / 2 + 120);
 	}
 
 	void Update () {
-		if(!acabou){
-			if(Input.GetButtonDown("Fire1")){  //mause 
+		if (!acabou && !pause)
+		{
 
-				startText.enabled = false;
-
-				if (!comecou){
-					comecou=true;
-					barra.SendMessage("ComecouJogo"); // para usar a barra
-				}
-
-				if(Input.mousePosition.x > Screen.width/2) //clicou na direita
+			if (EventSystem.current.IsPointerOverGameObject())
+			{
+				Debug.Log("Clicked on the UI");
+			}
+            else
+            {
+				if (Input.GetButtonDown("Fire1"))//mause 
 				{
-					bateDireita(); 
-				}else{ // clicou na esquerda
-					bateEsquerda();
+					startText.enabled = false;
+					startTextJP.enabled = false;
+
+					if (!comecou)
+					{
+						comecou = true;
+						barra.SendMessage("ComecouJogo"); // para usar a barra
+					}
+
+					if (Input.mousePosition.x > Screen.width / 2) //clicou na direita
+					{
+						bateDireita();
+					}
+					else
+					{ // clicou na esquerda
+						bateEsquerda();
+					}
+					Invoke("VoltaAnimacao", 0.25f);
+
+					felpudoBate.SetActive(true);  // ativa
+					felpudoIdle.SetActive(false); //desativa
+
+					listaBlocos.RemoveAt(0); //remove o q esta no 0
+					ReposicionaBlocos();
+					confereJogada();
 				}
-				Invoke("VoltaAnimacao", 0.25f);
-
-				felpudoBate.SetActive(true);  // ativa
-				felpudoIdle.SetActive(false); //desativa
-
-				listaBlocos.RemoveAt(0); //remove o q esta no 0
-				ReposicionaBlocos(); 
-				confereJogada();
 			}
 		}
 	}
@@ -158,7 +212,8 @@ public class Principal : MonoBehaviour {
             //se colocar barra.SendMessage("AumentaBarra");  nesee else de baixo fica mais facil o jogo
 		}else{MarcaPonto();}
 	}
-	void RecarregaCena(){
+
+	public void RecarregaCena(){
 		Application.LoadLevel("Timber1");
 	}
 
@@ -178,7 +233,9 @@ public class Principal : MonoBehaviour {
 	}
 
 	void FimDeJogo(){
-		acabou = true; 
+		acabou = true;
+
+		buttonMenuStting.enabled = false;
 
 		felpudoBate.GetComponent<SpriteRenderer>().color = new Color(1f,0.25f,0.25f,1.0f); //vermelho
 		felpudoIdle.GetComponent<SpriteRenderer>().color = new Color(1f,0.25f,0.25f,1.0f);//vermelho
@@ -191,7 +248,14 @@ public class Principal : MonoBehaviour {
 
         GetComponent<AudioSource>().PlayOneShot(somPerde); // som
 
-        Invoke("RecarregaCena", 1);
+		StartCoroutine(deadTimeStop.PauseGame(1f));
+		
+		Invoke("OpenScoreBoard", 1);
+	}
 
+	void OpenScoreBoard()
+    {
+		pauseController.PauseMenu();
+		webscore.CheckIfCorrespondsToNewScore(score);
 	}
 }

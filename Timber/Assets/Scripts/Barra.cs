@@ -3,13 +3,12 @@ using System.Collections;
 
 public class Barra : MonoBehaviour {
 
-
 	float escalaBarra;
 	bool terminou;
 	bool comecou;
 	public GameObject cameraCena;// para usar o outro script
 
-    public AudioClip somAcaba;
+    //public AudioClip somAcaba;
 
 	void Start () { 
 		escalaBarra = this.transform.localScale.x; //recebe a escala em x da barra
@@ -24,7 +23,7 @@ public class Barra : MonoBehaviour {
 				if(!terminou){
 					terminou = true;
 					cameraCena.SendMessage("FimDeJogo"); // para usar o outro script
-					GetComponent<AudioSource>().PlayOneShot(somAcaba);
+					//GetComponent<AudioSource>().PlayOneShot(somAcaba);
 				}  
 			}
 		} 
@@ -37,6 +36,11 @@ public class Barra : MonoBehaviour {
 
 	void ComecouJogo () { 
 		comecou = true;
+	}
+
+	void PauseGame()
+    {
+		comecou = false;
 	}
 
 
